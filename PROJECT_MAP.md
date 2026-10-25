@@ -23,7 +23,10 @@ Search `veera.html` by name (line numbers drift).
 | Weapon swing arcs (azimuth/tilt) | `WS[weapon:swing].p`, projected in `updatePose` into `f.wa`, `f.wl`, `f.wfw` |
 | Weapon body templates / phase timing | `WB` (body poses), `WT` (phase seconds), `wBuild`, `WRDY` (ready stance) |
 | Kinetic chain (joint stagger) | `WLEAD` (per-joint lead), `wSeg` (phase lookup), `wAtkPose` |
-| Footwork / planted feet | `wAtkPose` footwork block, `solveH`, `footX`, `f.prX`/`f.pfX` |
+| Footwork / planted feet | `wAtkPose` footwork block, `solveH`, `footX`, `footIK` (two-bone, both feet), `f.prX`/`f.pfX` |
+| Swing camera elevation | `WELEV` (in `footX` line), used in `updatePose` weapon projection |
+| Twist cap / torso twist | `updatePose` (`p.tw` clamp), `drawFig` (`twv`, `sd` shoulder radius) |
+| Character draw safety net | `drawChar` (try/catch) → `drawChar0` (real figure draw) |
 | Weapon damage / reach / stun | `mkWeapon` → `WATK` (damage, reach, knockback, stun, lunge, lead) |
 | Weapon trail / layering | `wTrail` (L3 grey swoosh), `wShaft` + `wBeh` in `drawFig` (bat behind body when cocked back) |
 | Cricket blade roll / stick slide | `drawFig` (`f.wl` y-scale on cricket), `f.ws` in `updatePose` (stick slide); used by hitbox and back-hand IK |
@@ -37,4 +40,5 @@ Search `veera.html` by name (line numbers drift).
 | A level's layout / waves | `buildLn`, `makeBGn`, `drawEnvn`, `wavesN`/`WAVESn` (L3: `WAVES3`, `waves3`) |
 | Level unlocking | `DEV_UNLOCK_ALL`, `unlocked`, `PROG`, `levelConfirm`, `PLAYABLE` |
 | Menus | `screen`, `enterMenu`, `menuFrame`, `renderMenu` |
+| Live-play / flash debugging | Headless harness used in tests (not in repo): run `window.__veera` with rAF frozen, sample canvas luminance |
 | Debug hook / test hooks | `window.__veera` (`step`, `render`, `WATK`, `startAttack`, `cam`, `add`, `get`, `startLevel`, `unlockAll`, `holdWaves`) |

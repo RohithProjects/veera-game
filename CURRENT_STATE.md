@@ -22,7 +22,7 @@ Hand-play L1→L3, tune swing reach/damage, then Level 4 "The Stranger".
 - Level 2 still weapon-free (verified headlessly). Headless Chromium run of L3 with all 4 weapons: 0 JS errors, no luminance spikes.
 - Debug hook now also exposes `WATK, startAttack, cam, render`.
 ## Not verified
-- Hand-feel/balance (damage, reach), enemy weapon animations untouched, 60 fps on real hardware (headless ran ~40 fps).
+- Hand-feel/balance (damage, reach), enemy weapon animations untouched, 60 fps on real hardware (headless ~7.5 ms/frame, software GL).
 
 - Pass 4b: swings are now horizontal-plane arcs. `WS[...].p` = [azimuth, tilt] per phase (pose keys `wph`/`wtl`); screen angle and length are projected from them in `updatePose` (`f.wl`, `f.wfw`), so the bat foreshortens when pointing at the camera instead of chopping through vertical. Hit length and drawing both use `f.wl`.
 
@@ -31,3 +31,19 @@ Hand-play L1→L3, tune swing reach/damage, then Level 4 "The Stranger".
 - Pass 5 (biomechanics): kinetic chain via per-joint time leads (WLEAD: legs > hips > torso > shoulders > elbows > weapon, scaled per weapon by a.lead), hip rotation key hp, head stabilised, footwork solver (rear foot pivot planted, front foot strides then plants; solveH), smaller lunge.
 
 - Pass 5b: cricket blade rolls flat to target (wph-based y-scale), stick slides through hands on strike (f.ws affects draw, hitbox, trail, back-hand IK). Verified headlessly: 32 weapon/face/swing cases hit only ahead, one hit per swing, weapon breaks cleanly, Level 2 pickup blocked.
+
+- Pass 6 (visual/feel fixes from user playtest of Level 3):
+  - Foot IK: two-bone solver keeps both feet on the ground (`footIK`, clamped to leg reach). Rear foot pivots, front foot plants after its stride. Measured foot-height error ≤1.3 px.
+  - Swing projection uses an elevated camera (`WELEV=.6`): the bat now sweeps level across the body instead of reading as a thrust. Weapon length floor raised to .42.
+  - Twist (`pose.tw`) capped at ±1.7. It reached ~3.2 during turns and swings, which distorted the torso.
+  - **White flash root cause:** `drawFig` computed a negative shoulder radius (`sd`) when twist was large. The canvas `arc` call threw, which aborted the rest of the frame: player, HUD and the vignette were skipped, so the frame flashed bright. Original code had the same bug in L1/L2. Fixed the radius (`Math.min(1,|twv|)`), capped twist, and wrapped `drawChar` in a try/catch (`drawChar0` is the real draw) so one bad figure can't drop a frame.
+  - Measured on the live loop (40 s random play): flash frames original L3 6 / L1 7 / L2 3 → fixed 0 / 0 / 0.
+  - Tests after all passes: 32/32 weapon hit cases correct; unarmed both facings runs; weapon break works; L2 weapon-free; no runtime errors L1–L3 in 45 s random play; no luminance spikes.
+- Published preview (same link) https://claude.ai/artifact/SFUc6kvVbaiZKQp3Vbc7ui. Repo is not pushed; patch in outputs.
+## Known / open
+- Blinking white lamp on Level 3 barricade/lamp is intentional (not a flash); keep unless user asks.
+- Enemy weapon animations use the shared foot code but were not visually reviewed.
+- Turning is slightly tighter after the twist cap; user to confirm feel.
+- Not hand-played by the agent; user playtest is the acceptance test before updating these files as final.
+## Next
+User playtests L1 and L3 (turning, flashes, swing feel). After confirmation: Level 4 "The Stranger" (locked placeholder).

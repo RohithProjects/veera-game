@@ -16,6 +16,9 @@ Source of truth: `veera.html` (single file: HTML + Canvas + JS, no assets, no se
 - **Hitbox:** only in ACTIVE, only in front of the body (`(ax-f.x)*f.face>-4`), one hit per target per swing. The hitbox follows the visible weapon length (`Ws.len+f.ws`, `f.wl`).
 - **Weapon-specific rules:** cricket blade rolls flat to the target at contact (`f.wl` y-scale in `drawFig`); stick slides through the hands on strikes (`f.ws`, also affects trail and back-hand IK). Bat is drawn behind the body when cocked back (`wBeh`).
 - **Test hooks** (`window.__veera`): `step`, `render`, `WATK`, `startAttack`, `cam`, `add`, `get`, `startLevel`, `unlockAll`, `holdWaves`. Use them for headless checks; keep them additive.
+- **Never let one draw call abort a frame.** Canvas `arc` with a negative radius throws and drops the rest of the frame (HUD, player, vignette) → visible flash. Clamp radii and angles at source; `drawChar` is wrapped in try/catch.
+- **Twist is capped** (`pose.tw` ±1.7). Larger values distort the torso.
+- **Feet stay on the ground:** `footIK` (two-bone) solves both legs at stance height; don't hand-tune hip/knee for planting.
 - **Weapons must never rest inside props** (`clearOfProps`); prompts appear only for real weapons, heavy objects only give the strain animation.
 
 ## Architecture
@@ -31,4 +34,4 @@ The atlas is a **motion reference only** — never copy its look. Map: idle, wal
 ## Quality / performance
 - Smooth gameplay first: no per-frame allocation in hot loops, cache backgrounds, cap particles, cull offscreen. Target 60 fps.
 - Graphics upgrades go through contact shadows, lighting, particles, trails — within grayscale.
-- Test headlessly (0 JS errors, no soft-locks, one hit per swing, no hits behind Veera, weapon break works, Level 2 pickup blocked, brightness spikes absent) and note anything unplayed in CURRENT_STATE.md.
+- Test headlessly (0 JS errors, no `arc` radius exceptions, no soft-locks, one hit per swing, no hits behind Veera, weapon break works, Level 2 pickup blocked, brightness spikes absent) and note anything unplayed in CURRENT_STATE.md.
