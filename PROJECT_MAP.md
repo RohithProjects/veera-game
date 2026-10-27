@@ -14,6 +14,7 @@ Search `veera.html` by name (line numbers drift).
 | A pose or state animation | `POSE` (poses), `targetFor` (state → pose + speed), `updatePose` (blend, turn, roll) |
 | Attack keyframes | `KF` + `KFX` (twist/wrist); timing/damage in `startAttack` |
 | Walk/run cycle | `RH`, `RK`, `locoPose` |
+| Run speed cap (Level 4 uses `CH.vmax`) | `updatePlayer` (`max` line) |
 | Turning | `updatePose` (turn block: `fT`, `turnK`), width clamp in `drawFig` |
 | How a figure is drawn (limbs, head, headband, arms) | `drawFig`, `legPts`, `armPts`, `drawFace` |
 | Two-handed weapon grip | `drawFig` (`W2`, `A2b` IK on back arm) |
@@ -38,7 +39,17 @@ Search `veera.html` by name (line numbers drift).
 | Particles, dust, afterimages | `dust`, `parts`, `ghostOf` |
 | Enemy behaviour | `crowd`, `AIP`, `maxAtk`, `decideAttack`; bosses `bossChoose3` |
 | A level's layout / waves | `buildLn`, `makeBGn`, `drawEnvn`, `wavesN`/`WAVESn` (L3: `WAVES3`, `waves3`) |
+| **Level 4 chase: start, gap, mistakes, knockdown** | `buildL4` (layout, obstacle list, car start), `chPre`/`chPost` (per-frame logic), `CH` (state: `mist`, `fg` gap, `fin`, `tip`) |
+| Level 4 car: speed, chase gap, crash, explosion | `chPost` car block (`c.mode`: idle/drive/swerve/crash/wreck), `gt` table for gap targets, `drawCar` |
+| Level 4 hazards (jump, timed, falling sign) | `chPost` obstacle loop, `chObs`, `chFall`; hazard sizes in `CHSZ` |
+| Level 4 camera | `chCam` (branch in `camUpdate`) |
+| Level 4 background / scenery | `chFar`, `chMid`, `chNear`, `chPole`, `drawChase` (zone colours in `sh`) |
+| Level 4 goons | `drawGoon`, `drawCar` (goons drawn inside the car window) |
+| Level 4 HUD and tips | `chaseHud`, `chTip`, `CHTUT` (tips show once per page load) |
+| Level 4 effects | `chBoom`, `drawFxP`, `CH.fx` (capped at 340) |
+| Level 4 wiring into the shared engine | `PLAYABLE`, `startLevel` (level 4 branch), `reset`, `simulate`, `camUpdate`, `render` (drawChase/drawChaseTop), HUD branch, `pLoco` (`CH.vmax`) |
 | Level unlocking | `DEV_UNLOCK_ALL`, `unlocked`, `PROG`, `levelConfirm`, `PLAYABLE` |
+| Level names | Chapter 1 list in the level-select data (Level 4 "The Chase", Level 5 "The Stranger") |
 | Menus | `screen`, `enterMenu`, `menuFrame`, `renderMenu` |
 | Live-play / flash debugging | Headless harness used in tests (not in repo): run `window.__veera` with rAF frozen, sample canvas luminance |
-| Debug hook / test hooks | `window.__veera` (`step`, `render`, `WATK`, `startAttack`, `cam`, `add`, `get`, `startLevel`, `unlockAll`, `holdWaves`) |
+| Debug hook / test hooks | `window.__veera` (`step`, `render`, `cu`, `CH`, `WATK`, `startAttack`, `cam`, `add`, `get`, `startLevel`, `unlockAll`, `holdWaves`) |
