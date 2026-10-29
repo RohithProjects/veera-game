@@ -1212,7 +1212,12 @@ function updatePlayer(p,dt){
       if(p.t>=p.dur){p.st='loco';p.t=0}
       break;
     case 'down':
-      if(p.onG&&!p.landed){p.landed=true;p.lieT=0;dust(p.x,GY-3,6);SFX.down();trauma=Math.min(.7,trauma+.1)}
+      {const fin4=level===4&&CH.mist>=3;/* Level 4 final knockdown: he lands, settles with one small rebound, then stays down */
+      if(p.onG&&!p.landed){
+        if(fin4&&!p.bnc){p.bnc=1;p.vy=-150;p.vx*=.55;p.onG=false;dust(p.x,GY-3,8);SFX.down();trauma=Math.min(.8,trauma+.2)}
+        else{p.landed=true;p.lieT=0;dust(p.x,GY-3,fin4?10:6);SFX.down();trauma=Math.min(.7,trauma+.1)}
+      }
+      if(fin4&&p.onG&&p.landed){p.vx*=Math.exp(-8*dt);p.lieT+=dt;break}}
       if(p.onG){p.vx*=Math.exp(-8*dt);if(p.landed){p.lieT+=dt;if(peek('dodge',.1)&&p.lieT>.3){p.st='getup';p.t=.3;p.hurtT=.4;p.dodgeCd=-1;eat('dodge');p.vx=-p.face*0;break}if(p.lieT>.55){p.st='getup';p.t=0}}}
       break;
     case 'getup':
@@ -2682,13 +2687,14 @@ window.focus();cv.focus();
 /* ===== LEVEL 4: THE CHASE (isolated; only active when level===4) ===== */
 const CHZ=[300,5600,11200,17200],CHX=25280,CHV=[400,445,480,540],CHN=['SOUTH INDIAN STREET','MARKET ROAD','CONSTRUCTION ZONE','OPEN ROAD'],CHT=['தெரு','சந்தை சாலை','கட்டுமான பகுதி','திறந்த சாலை'];
 const CHTUT={};
-const CH={tip:'',tipT:0,fg:450,go:false,fin:0,mist:0,inv:0,t:0,obs:[],car:null,fx:[],vmax:400,msg:'',msgT:0,zn:-1,znT:0,failT:0,bar:0,gl:0};
+const CHG=[400,340,280,40],CHG0=400;
+const CH={tip:'',tipT:0,fg:400,zb:1.3,bt:0,go:false,fin:0,mist:0,inv:0,t:0,obs:[],car:null,fx:[],vmax:400,msg:'',msgT:0,zn:-1,znT:0,failT:0,bar:0,gl:0};
 const chH=n=>{n=Math.sin(n*127.1+311.7)*43758.5453;return n-Math.floor(n)};
 const chZone=x=>x<CHZ[1]?0:x<CHZ[2]?1:x<CHZ[3]?2:3;
 const CHSZ={crate:[60,56],bin:[48,62],bikeF:[110,54],block:[110,70],cart:[120,72],chairs:[54,72],barrel:[46,66],pipe:[130,58],debris:[70,38]};
 function buildL4(){
   solids=[];CH.go=false;CH.fin=0;CH.mist=0;CH.inv=0;CH.t=0;CH.fx.length=0;CH.msg='';CH.msgT=0;CH.zn=-1;CH.failT=0;CH.caught=0;CH.bar=0;CH.gl=0;
-  CH.tip='';CH.tipT=0;CH.fg=450;CH.car={x:-260,vx:480,wa:0,by:0,bi:0,pit:0,ang:0,mode:'drive',t:0,pv:0,duck:0,crum:0,sm:0,gx:[0,1,2,3].map(i=>({ph:i*1.9+.4,w:.9+i*.23}))};
+  CH.tip='';CH.tipT=0;CH.fg=CHG0;CH.zb=BASEZ-.2;CH.bt=0;CH.car={x:-230,vx:480,wa:0,by:0,bi:0,pit:0,ang:0,mode:'drive',t:0,pv:0,duck:0,crum:0,sm:0,gx:[0,1,2,3].map(i=>({ph:i*1.9+.4,w:.9+i*.23}))};
   const o=CH.obs=[];let x=1500,n=0,sd=7;const R=()=>{sd=(sd*16807)%2147483647;return sd/2147483647};
   const SP=[540,520,500,480],ST=[['crate','bin','bikeF','block'],['crate','cart','chairs','bikeF','debris'],['block','pipe','barrel','crate','debris'],['block','barrel','pipe','bikeF','crate']];
   while(x<24000){
@@ -2707,8 +2713,8 @@ function buildL4(){
 function chTip(k,t,d){if(CHTUT[k]||CH.tipT>0)return;CHTUT[k]=1;CH.tip=t;CH.tipT=d}
 function chMsg(s){CH.msg=s;CH.msgT=1.6}
 function chBoom(x,y,n,k,sp,sz,l){for(let i=0;i<n&&CH.fx.length<340;i++)CH.fx.push({k,x:x+rnd(-12,12),y:y+rnd(-10,10),vx:rnd(-sp,sp),vy:rnd(-sp,sp*.2)-(k===0?sp*.4:0),l:rnd(l*.6,l),m:l,s:rnd(sz*.6,sz),a:rnd(0,6),va:rnd(-9,9)})}
-function chMiss(){
-  if(CH.inv>0||state!=='play'||CH.mist>=3)return;const p=player;CH.mist++;CH.inv=1.5;trauma=Math.min(.7,trauma+.2+CH.mist*.1);dust(p.x,GY-3,6+CH.mist*3);SFX.heavy();
+function chMiss(o){
+  if(CH.inv>0||state!=='play'||CH.mist>=3)return;CH.why=o?o.k:'?';CH.whyX=o?(o.k==='cross'?o.bx:o.x):0;const p=player;CH.mist++;CH.inv=1.5;trauma=Math.min(.7,trauma+.2+CH.mist*.1);dust(p.x,GY-3,6+CH.mist*3);SFX.heavy();
   if(CH.mist===1){p.st='hit';p.dur=.3;p.t=0;p.vx*=.6;chMsg('CLIPPED  —  THE CAR IS CLOSING IN')}
   else if(CH.mist===2){p.st='hitH';p.dur=.5;p.t=0;p.vx*=.4;p.vy=-150;p.onG=false;chMsg('STUMBLED  —  CAR RIGHT BEHIND YOU')}
   else{p.st='down';p.t=0;p.vx=240;p.vy=-340;p.onG=false;p.landed=false;CH.failT=1.6;CH.go=false;chMsg('FELL  —  THE CAR IS ON YOU')}
@@ -2723,16 +2729,22 @@ function chPost(dt){
   const z=chZone(p.x);if(z!==CH.zn){CH.zn=z;CH.znT=2.8}
   if(CH.fin){p.vx=CH.pvx*Math.exp(-3.6*dt);if(Math.abs(p.vx)<20)p.vx=0}
   // ---- car (chases from behind) ----
-  c.t+=dt;const g=p.x-c.x,zc=chZone(p.x);CH.fg=g-134;CH.tipT=Math.max(0,CH.tipT-dt);
+  c.t+=dt;if(CH.bar)CH.bt+=dt;const g=p.x-c.x,zc=chZone(p.x);CH.fg=g-134;CH.tipT=Math.max(0,CH.tipT-dt);
   if(CH.t>1)chTip('run','RUN!  THE CAR IS BEHIND YOU',3);
   if(c.mode==='drive'||c.mode==='swerve'){
-    let gt=[450,370,300,40][Math.min(3,CH.mist)]+22*Math.sin(CH.t*.7);if(p.x>24350&&CH.mist<3)gt=Math.max(gt,450);
+    let gt=CHG[Math.min(3,CH.mist)]+(CH.mist<3?18*Math.sin(CH.t*.7):0);if(p.x>24350&&CH.mist<3)gt=Math.max(gt,CHG0);
     let tv=CHV[zc]+clamp((g-gt)*.5,-120,160);if(c.mode==='swerve')tv=240;
     c.vx+=clamp(tv-c.vx,-700*dt,420*dt);
-    if(!CH.bar&&c.x+134>122){CH.bar=1;wood(130,GY-40,14);dust(130,GY-3,10);trauma=Math.min(.7,trauma+.35);SFX.heavy();c.bi=-9}
+    if(!CH.bar&&c.x+134>122){CH.bar=1;CH.bt=0;wood(130,GY-40,14);dust(130,GY-3,10);trauma=Math.min(.7,trauma+.35);SFX.heavy();c.bi=-9}
     if(c.mode==='swerve'){c.ang=Math.sin(c.t*10)*.1*Math.max(0,1-c.t*.7);if(Math.random()<.5)chBoom(c.x-60,GY-4,1,3,200,6,.2)}
     if(c.mode==='swerve'&&c.x+134>=CHX-30){c.mode='crash';c.t=0;c.ang=0;chBoom(c.x+110,GY-60,26,3,520,7,.4);chBoom(c.x+100,GY-30,10,2,300,9,1.1);dust(c.x+90,GY-3,16);trauma=.85;SFX.heavy();CH.fin=1;CH.gl=0}
-    if(CH.fg<16&&state==='play'&&c.mode==='drive'&&!CH.caught){CH.caught=1;CH.mist=3;CH.go=false;CH.failT=Math.min(CH.failT||9,1.3);chMsg('KNOCKED DOWN');if(p.st!=='down'){p.st='down';p.t=0;p.vx=520;p.vy=-420;p.onG=false;p.landed=false;trauma=.8;SFX.heavy();dust(p.x,GY-3,14)}}
+    if(c.mode==='drive'&&!CH.caught){
+      if(CH.mist>=3&&p.st==='down'){if(CH.fg<150){CH.caught=1;c.mode='brake';c.t=0}}/* already on the ground after the third mistake: the car brakes short of him */
+      else if(CH.fg<16&&state==='play'){CH.caught=1;CH.mist=3;CH.go=false;CH.failT=Math.min(CH.failT||9,1.5);chMsg('KNOCKED DOWN');c.mode='brake';c.t=0;c.bi=-12;
+        p.st='down';p.t=0;p.vx=420;p.vy=-340;p.onG=false;p.landed=false;p.bnc=0;p.lieT=0;trauma=.85;hitStop=Math.max(hitStop,.09);SFX.heavy();dust(p.x,GY-3,14);chBoom(p.x-20,GY-60,8,3,380,6,.25)}
+    }
+  }else if(c.mode==='brake'){
+    c.vx*=Math.exp(-(CH.mist>=3&&p.st==='down'&&p.vx<5?13:9)*dt);if(c.vx<6)c.vx=0;if(c.vx>200&&Math.random()<dt*40)chBoom(c.x-100,GY-6,1,3,160,5,.2);
   }else if(c.mode==='crash'){
     c.vx*=Math.exp(-9*dt);c.crum=Math.min(1,c.crum+dt*5);c.pit+=(.05-c.pit)*Math.min(1,dt*6);
     if(c.t>.35&&c.t<2.5&&Math.random()<dt*(6+c.t*8)){chBoom(c.x+85,GY-80,1,0,50,10,1.3);if(Math.random()<.3)chBoom(c.x+100,GY-70,2,3,160,6,.25)}
@@ -2760,20 +2772,21 @@ function chPost(dt){
     const dx=Math.abs(o.x-p.x);
     if(!o.fin&&o.k!=='cross'&&c.mode==='drive'&&(o.k==='fall'?o.s===3:o.s===0)&&c.x+134>o.x-o.w/2&&c.x<o.x+o.w/2+60){o.s=o.k==='fall'||o.k==='gap'?-1:1;o.t=0;if(o.k!=='gap'){wood(o.x,GY-30,6);dust(o.x,GY-3,8);c.vx*=.93}c.bi=-8;c.duck=.3;trauma=Math.min(.7,trauma+.12)}
     if(o.k==='cross'){
-      if(!o.s&&o.x-p.x<760&&p.x<o.x){o.s=1;o.t=0;o.bx=p.x+840;chTip('dash','L  —  DASH THROUGH, OR JUMP OVER',3.2)}
-      else if(o.s===1){o.t+=dt;if(o.t>.55)o.s=2}
-      else if(o.s===2){o.bx-=330*dt;if(Math.abs(o.bx-p.x)<62&&air<66&&!dsh&&CH.inv<=0){chMiss();o.s=-1}if(o.bx<p.x-500)o.s=-1}
+      if(!o.s&&o.x-p.x<760&&p.x<o.x){o.s=1;o.t=0;o.bx=p.x+900;chTip('dash','L  —  DASH THROUGH, OR JUMP OVER',3.2)}
+      else if(o.s===1){o.t+=dt;if(o.t>.7)o.s=2}
+      else if(o.s===2){o.bx-=330*dt;if(Math.abs(o.bx-p.x)<58&&air<o.h-8&&!dsh&&CH.inv<=0&&p.st!=='down'){chMiss(o);o.s=3}if(o.bx<p.x-700)o.s=-1}
+      else if(o.s===3){o.bx-=330*dt;if(o.bx<p.x-700)o.s=-1}
     }else if(o.k==='fall'){
       if(!o.s&&(o.fin?(p.x>o.x+30&&c.mode==='drive'&&c.x+134>o.x-300):(p.x<o.x&&o.x-p.x<Math.max(250,p.vx)*.85+50))){o.s=1;o.t=0;if(!o.fin)chTip('dash','L  —  DASH THROUGH IT',3.2)}
       else if(o.s===1){o.t+=dt;if(o.t>(o.fin?.22:.6)){o.s=2;o.t=0}}
-      else if(o.s===2){o.t+=dt;if(!o.fin&&o.t>=.12&&dx<o.w/2+8&&!dsh&&CH.inv<=0)chMiss();if(o.t>=.22){o.s=3;o.t=0;dust(o.x,GY-3,14);wood(o.x,GY-30,6);trauma=Math.min(.7,trauma+.25);SFX.heavy();if(o.fin&&c.mode==='drive'){c.mode='swerve';c.t=0;c.bi=-14;c.duck=1}}}
-      else if(o.s===3){o.t+=dt;if(!o.fin&&dx<o.w/2+10&&p.x<o.x+8&&air<o.h-4&&o.t>.5&&!dsh&&CH.inv<=0){chMiss();o.s=-2}}
+      else if(o.s===2){o.t+=dt;if(!o.fin&&o.t>=.2&&dx<o.w/2+4&&air<50&&!dsh&&CH.inv<=0)chMiss(o);if(o.t>=.22){o.s=3;o.t=0;dust(o.x,GY-3,14);wood(o.x,GY-30,6);trauma=Math.min(.7,trauma+.25);SFX.heavy();if(o.fin&&c.mode==='drive'){c.mode='swerve';c.t=0;c.bi=-14;c.duck=1}}}
+      else if(o.s===3){o.t+=dt;if(!o.fin&&dx<o.w/2+6&&air<o.h-4&&!dsh&&CH.inv<=0){chMiss(o);o.s=-2}}
     }else if(o.k==='gap'){
       if(o.x-p.x<640&&p.x<o.x)chTip('jump','SPACE / W  —  JUMP',3.2);
-      if(dx<o.w/2-10&&air<14&&CH.inv<=0&&p.st!=='down'&&p.st!=='hitH'){chMiss();o.s=-2}
+      if(dx<o.w/2-10&&air<14&&CH.inv<=0&&p.st!=='down'&&p.st!=='hitH'){chMiss(o);o.s=-2}
     }else if(o.x-p.x<640&&p.x<o.x&&(chTip('jump','SPACE / W  —  JUMP',3.2),0)){
     }else if(dx<o.w/2+10&&air<o.h-6&&CH.inv<=0&&!o.s){
-      chMiss();o.s=1;o.t=0;wood(o.x,GY-30,5);if(o.k==='bikeF'||o.k==='block')dust(o.x,GY-3,8)
+      chMiss(o);o.s=1;o.t=0;wood(o.x,GY-30,5);if(o.k==='bikeF'||o.k==='block')dust(o.x,GY-3,8)
     }
     if(o.s===1&&o.k!=='fall'&&o.k!=='cross'){o.t+=dt;if(o.t>.6)o.s=-1}
   }
@@ -2786,11 +2799,22 @@ function chPost(dt){
     if(f.k===4)f.s+=dt*900}
 }
 function chCam(rdt){
-  const P=player,c=CH.car;let tx=P.x+90+clamp(P.vx,0,600)*.12;
-  if(c.mode==='swerve'||c.mode==='crash'||c.mode==='wreck')tx=(c.x+P.x)/2+40;
-  const half=W/2/cam.zoom;tx=clamp(tx,half,WORLD-half);
-  cam.x+=(tx-cam.x)*(1-Math.exp(-5.5*rdt));cam.kx*=Math.exp(-11*rdt);punch*=Math.exp(-8*rdt);
-  cam.zoom=BASEZ-.2+punch;cam.y=CAMY;trauma=Math.max(0,trauma-rdt*1.7);
+  /* Frames the whole car (rear margin) + Veera + look-ahead. Zoom eases out only as far as needed; position follows Veera and is clamped so the car is never clipped. */
+  const P=player,c=CH.car,fin=c.mode==='swerve'||c.mode==='crash'||c.mode==='wreck',ZMAX=BASEZ-.2,REAR=185,AHEAD=fin?260:380;
+  const L=Math.min(c.x-REAR,P.x-170),R=Math.max(P.x+AHEAD,c.x+REAR);
+  const zt=CH.bar?clamp(W/(R-L),1.0,ZMAX):ZMAX;
+  CH.zb+=(zt-CH.zb)*(1-Math.exp(-3*rdt));
+  cam.zoom=CH.zb+punch;
+  const half=W/2/cam.zoom;let tx=fin?(c.x+P.x)/2+40:P.x+40;
+  if(!CH.bar)tx=clamp(P.x+90+clamp(P.vx,0,600)*.12,half,WORLD-half);
+  cam.x+=(tx-cam.x)*(1-Math.exp(-5.5*rdt));
+  if(CH.bar){
+    const k=Math.min(1,CH.bt/.7),lo=Math.max(P.x+170,fin?c.x+REAR:0)-half,hi=L+half+(1-k)*900;
+    cam.x=lo<=hi?clamp(cam.x,lo,hi):(lo+hi)/2;
+    cam.x=Math.min(cam.x,WORLD-half);
+  }
+  cam.kx*=Math.exp(-11*rdt);punch*=Math.exp(-8*rdt);
+  cam.y=CAMY;trauma=Math.max(0,trauma-rdt*1.7);
 }
 /* ---- drawing ---- */
 function chR(x,y,w,h,f,l){ctx.fillStyle=f;ctx.fillRect(x,y,w,h);if(l){ctx.strokeStyle='#161616';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h)}}
@@ -2814,7 +2838,6 @@ function chNear(u,i,z){
     chR(u,GY-250,w,250,'#e6e6e6',1);chR(u-8,GY-262,w+16,16,'#8e8e8e',1);
     chR(u+40,GY-150,w-80,150,'#383838',1);for(let y=GY-146;y<GY;y+=12)chR(u+40,y,w-80,2,'#555');
     chR(u+30,GY-240,w-60,60,'#101010',1);txt(CHSIGN[i&7&&(Math.abs(i)%6)],u+w/2,GY-198,30,'center','#f4f4f4');
-    if(r>.55){chCirc(u+w+20,GY-18,16,'#222');chCirc(u+w+80,GY-18,16,'#222');chR(u+w+24,GY-46,60,16,'#aaa',1)}
   }else if(z===1){
     ctx.fillStyle='#d9d9d9';for(let k=0;k<7;k++){ctx.fillStyle=k%2?'#1c1c1c':'#e9e9e9';ctx.beginPath();ctx.moveTo(u+k*62,GY-190);ctx.lineTo(u+k*62+62,GY-190);ctx.lineTo(u+k*62+72,GY-150);ctx.lineTo(u+k*62+10,GY-150);ctx.fill()}
     chR(u+14,GY-150,6,150,'#222');chR(u+w-24,GY-150,6,150,'#222');chR(u+20,GY-62,w-60,62,'#a0a0a0',1);
@@ -2831,7 +2854,26 @@ function chNear(u,i,z){
   }
 }
 function chPole(u,i,z){chR(u-5,GY-310,10,310,'#2b2b2b');chR(u-30,GY-300,60,6,'#2b2b2b');ctx.strokeStyle='#222';ctx.lineWidth=2;for(let k=0;k<2;k++){ctx.beginPath();ctx.moveTo(u-26+k*52,GY-298);ctx.quadraticCurveTo(u+190,GY-240+k*6,u+354+k*52-26,GY-298);ctx.stroke()}}
+function chBike(o,vx0,vx1){
+  if(o.s<1)return;const x=o.bx,visR=vx1-80;
+  if(o.s===1||(o.s===2&&x>visR+40)){/* telegraph: blinking arrow at the right edge while the bike is still off-screen */
+    if(Math.floor(CH.t*6)%2){const ax=visR-46,ay=GY-90;chR(ax-34,ay-26,68,52,'#101010',1);ctx.fillStyle='#fafafa';ctx.beginPath();ctx.moveTo(ax-24,ay);ctx.lineTo(ax-4,ay-16);ctx.lineTo(ax-4,ay+16);ctx.fill();txt('!',ax+16,ay+14,40,'center','#fafafa')}
+    if(x>visR+40)return;
+  }
+  if(x<vx0-120)return;
+  ctx.save();ctx.translate(x,GY);
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(0,2,62,6,0,0,6.3);ctx.fill();
+  const hl=ctx.createLinearGradient(-56,0,-190,0);hl.addColorStop(0,'rgba(255,255,255,.28)');hl.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=hl;ctx.beginPath();ctx.moveTo(-54,-40);ctx.lineTo(-190,-70);ctx.lineTo(-190,-4);ctx.fill();
+  for(const wx of[-38,38]){chCirc(wx,-18,18,'#161616');chCirc(wx,-18,7,'#bdbdbd',1);ctx.save();ctx.translate(wx,-18);ctx.rotate(-o.bx/18);ctx.strokeStyle='#777';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.moveTo(0,-14);ctx.lineTo(0,14);ctx.stroke();ctx.restore()}
+  ctx.strokeStyle='#3a3a3a';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-38,-18);ctx.lineTo(-24,-46);ctx.lineTo(18,-40);ctx.lineTo(38,-18);ctx.stroke();
+  chR(-18,-56,42,18,'#d6d6d6',1);chR(-34,-54,10,14,'#222');chCirc(-50,-44,6,'#fafafa',1);
+  ctx.strokeStyle='#161616';ctx.lineWidth=11;ctx.beginPath();ctx.moveTo(24,-52);ctx.lineTo(4,-70);ctx.stroke();
+  ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(6,-68);ctx.lineTo(-24,-56);ctx.stroke();
+  chCirc(-2,-80,9,'#ededed',1);ctx.fillStyle='#111';ctx.fillRect(-8,-83,3,3);
+  ctx.restore();
+}
 function chObs(o,vx0,vx1){
+  if(o.k==='cross'){chBike(o,vx0,vx1);return}
   const x=o.x,w=o.w,h=o.h;if(x+w<vx0||x-w>vx1||o.s<0)return;
   ctx.save();ctx.translate(x,GY);if(o.s===1&&o.k!=='fall'&&o.k!=='cross'){ctx.rotate(-.5*o.t);ctx.globalAlpha=1-o.t*1.6}
   switch(o.k){
@@ -2857,7 +2899,7 @@ function chFall(o){
   ctx.save();ctx.translate(0,yy);if(s===3){ctx.rotate(.12);ctx.scale(1,.55)}
   if(o.v===0){chR(-w/2,-70,w,56,'#efefef',1);chR(-w/2+8,-14,6,14,'#333');chR(w/2-14,-14,6,14,'#333');txt(o.txt,0,-34,26,'center','#111')}
   else if(o.v===1){for(let k=0;k<3;k++)chR(-w/2,-20-k*20,w,18,k%2?'#aaa':'#c8c8c8',1)}
-  else{for(let k=0;k<2;k++)for(let q=0;q<2;q++)chR(-w/2+q*64,-54-k*54,62,52,'#d0d0d0',1)}
+  else{for(let q=0;q<2;q++)chR(-w/2+q*64+1,-54,62,52,'#d0d0d0',1)}
   ctx.restore();
 }
 function drawFxP(){
@@ -2903,7 +2945,7 @@ function drawChase(){
   const gr=ctx.createLinearGradient(0,0,0,GY);gr.addColorStop(0,'rgb('+top+','+top+','+top+')');gr.addColorStop(1,'rgb('+bot+','+bot+','+bot+')');ctx.fillStyle=gr;ctx.fillRect(x0,0,x1-x0,GY+2);
   if(z===3){chCirc(cx+320,170,52,'rgba(255,255,255,.75)')}
   chLayer(.2,260,cx,hw,chFar);chLayer(.5,320,cx,hw,chMid);
-  chR(x0,GY-4,x1-x0,200,'#555');chR(x0,GY-12,x1-x0,10,'#bdbdbd');chR(x0,GY-2,x1-x0,3,'#222');
+  chR(x0,GY-4,x1-x0,300,'#555');chR(x0,GY-12,x1-x0,10,'#bdbdbd');chR(x0,GY-2,x1-x0,3,'#222');
   ctx.fillStyle='#eee';for(let x=Math.floor(x0/120)*120;x<x1;x+=120)ctx.fillRect(x,GY+62,60,5);
   ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=2;const cz=Math.min(3,z+1);for(let x=Math.floor(x0/200)*200;x<x1;x+=200){if(chH(x)<.12*cz){ctx.beginPath();ctx.moveTo(x,GY+20);ctx.lineTo(x+50,GY+40);ctx.lineTo(x+70,GY+34);ctx.stroke()}}
   chLayer(1,470+60,cx,hw,chNear);chLayer(1,400,cx,hw,chPole);
@@ -2918,18 +2960,18 @@ function drawChaseTop(){
   drawFxP();
 }
 function chaseHud(){
-  const fg=clamp(CH.fg,0,450);
+  const fg=clamp(CH.fg,0,CHG0);
   txt('THE CHASE',34,40,16,'left','#0a0a0a','#fff',4);
   for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(46+i*30,66,10,0,6.3);ctx.fillStyle=i<3-CH.mist?'#fafafa':'#222';ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.stroke()}
-  ctx.fillStyle='rgba(0,0,0,.8)';ctx.fillRect(31,87,308,12);ctx.fillStyle='#4a4a4a';ctx.fillRect(34,90,302,6);ctx.fillStyle=fg<110?'#d8d8d8':'#fafafa';ctx.fillRect(34,90,302*fg/450,6);
+  ctx.fillStyle='rgba(0,0,0,.8)';ctx.fillRect(31,87,308,12);ctx.fillStyle='#4a4a4a';ctx.fillRect(34,90,302,6);ctx.fillStyle=fg<110?'#d8d8d8':'#fafafa';ctx.fillRect(34,90,302*fg/CHG0,6);
   txt('CAR',34,120,12,'left','#e8e8e8','#000',3);txt('SAFE',336,120,12,'right','#e8e8e8','#000',3);
   if(fg<110&&state==='play'&&!CH.fin&&Math.floor(CH.t*6)%2){txt('DANGER',W/2,H-60,30,'center','#fafafa','#000',6)}
-  if(CH.tipT>0){ctx.globalAlpha=clamp(CH.tipT/.5,0,1);ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(W/2-250,262,500,54);txt(CH.tip,W/2,298,26,'center','#fafafa','#000',4);ctx.globalAlpha=1}
+  if(CH.tipT>0&&CH.mist<3){ctx.globalAlpha=clamp(CH.tipT/.5,0,1);ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(W/2-250,262,500,54);txt(CH.tip,W/2,298,26,'center','#fafafa','#000',4);ctx.globalAlpha=1}
   if(CH.znT>0){ctx.globalAlpha=clamp(CH.znT/.6,0,1);txt(CHN[CH.zn],W/2,150,26,'center','#fafafa','#000',5);txt(CHT[CH.zn],W/2,180,20,'center','#e0e0e0','#000',4);ctx.globalAlpha=1}
   if(CH.msgT>0){ctx.globalAlpha=clamp(CH.msgT/.4,0,1);txt(CH.msg,W/2,230,22,'center','#fafafa','#000',5);ctx.globalAlpha=1}
 }
 
-window.__veera={CH,cu:camUpdate,holdWaves:()=>{waveT=1e9},PROG,menu,menuKey,enterMenu,unlockAll:()=>{for(let i=1;i<=6;i++)PROG.done[i]=true},add:(t,x)=>{const e=mk('enemy',t,x);enemies.push(e);return e},mk,drawFig,locoPose,updatePose,strideK,ctx,startLevel,bus,traffic,get:()=>({player,enemies,state,wave,score,combo,hasBoss,solids,level,area,drops,trans,screen,paused}),keys,buf,step:(dt)=>simulate(dt),WATK,startAttack,cam,render:()=>render(.016),setGT:v=>{gt=v}};
+window.__veera={CH,chObs,CHSZ,cu:camUpdate,holdWaves:()=>{waveT=1e9},PROG,menu,menuKey,enterMenu,unlockAll:()=>{for(let i=1;i<=6;i++)PROG.done[i]=true},add:(t,x)=>{const e=mk('enemy',t,x);enemies.push(e);return e},mk,drawFig,locoPose,updatePose,strideK,ctx,startLevel,bus,traffic,get:()=>({player,enemies,state,wave,score,combo,hasBoss,solids,level,area,drops,trans,screen,paused}),keys,buf,step:(dt)=>simulate(dt),WATK,startAttack,cam,render:()=>render(.016),setGT:v=>{gt=v}};
 requestAnimationFrame(frame);
 })();
 </script>

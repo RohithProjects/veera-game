@@ -1,55 +1,43 @@
-# PROJECT_MAP.md — file structure & "use this for that"
+# PROJECT_MAP.md — where things are
+
 ## Files
 | File | Purpose |
 |---|---|
-| `veera.html` | The whole game (HTML + Canvas + JS). Source of truth. Edit in place; never split without asking. |
-| `CLAUDE.md` | Rules: read before any change. |
-| `PROJECT_MAP.md` | This guide. |
-| `CURRENT_STATE.md` | Progress, flags, next task. |
-Search `veera.html` by name (line numbers drift).
+| `veera.html` | The whole game. Source of truth. Edit in place. Search by name (line numbers drift). |
+| `CLAUDE.md` | Rules. Read first. |
+| `PROJECT_MAP.md` | This navigation map. |
+| `CURRENT_STATE.md` | Progress, open decisions, next steps. |
+
 ## Use this for that
 | To change… | Go to |
 |---|---|
 | Key bindings / input buffer | `KM`, `keydown`, `peek`, `eat` |
-| A pose or state animation | `POSE` (poses), `targetFor` (state → pose + speed), `updatePose` (blend, turn, roll) |
-| Attack keyframes | `KF` + `KFX` (twist/wrist); timing/damage in `startAttack` |
-| Walk/run cycle | `RH`, `RK`, `locoPose` |
-| Run speed cap (Level 4 uses `CH.vmax`) | `updatePlayer` (`max` line) |
-| Turning | `updatePose` (turn block: `fT`, `turnK`), width clamp in `drawFig` |
-| How a figure is drawn (limbs, head, headband, arms) | `drawFig`, `legPts`, `armPts`, `drawFace` |
-| Two-handed weapon grip | `drawFig` (`W2`, `A2b` IK on back arm) |
-| Weapon slash effect | `slashFx` (armed), plain trail in `drawChar`; points pushed in `updatePose` |
-| Weapon stats / models / durability | `WSPEC`, `WDUR`, `WATK`, `weaponShape`, `weaponHits` |
-| Weapon pickup / heavy reject | `findPickup`, `findHeavy`, `drops`, `clearOfProps` (keeps weapons out of props) |
-| Weapon swing arcs (azimuth/tilt) | `WS[weapon:swing].p`, projected in `updatePose` into `f.wa`, `f.wl`, `f.wfw` |
-| Weapon body templates / phase timing | `WB` (body poses), `WT` (phase seconds), `wBuild`, `WRDY` (ready stance) |
-| Kinetic chain (joint stagger) | `WLEAD` (per-joint lead), `wSeg` (phase lookup), `wAtkPose` |
-| Footwork / planted feet | `wAtkPose` footwork block, `solveH`, `footX`, `footIK` (two-bone, both feet), `f.prX`/`f.pfX` |
-| Swing camera elevation | `WELEV` (in `footX` line), used in `updatePose` weapon projection |
-| Twist cap / torso twist | `updatePose` (`p.tw` clamp), `drawFig` (`twv`, `sd` shoulder radius) |
-| Character draw safety net | `drawChar` (try/catch) → `drawChar0` (real figure draw) |
-| Weapon damage / reach / stun | `mkWeapon` → `WATK` (damage, reach, knockback, stun, lunge, lead) |
-| Weapon trail / layering | `wTrail` (L3 grey swoosh), `wShaft` + `wBeh` in `drawFig` (bat behind body when cocked back) |
-| Cricket blade roll / stick slide | `drawFig` (`f.wl` y-scale on cricket), `f.ws` in `updatePose` (stick slide); used by hitbox and back-hand IK |
-| Weapon hit/hitbox check | `weaponHits` (ACTIVE only, in front of body), `applyHit` |
-| Hit impact feedback (L3) | `ring` (thin grey ring), `dust` at strike, `spark`; L3 uses grey, not white |
-| Screen effects | trauma/shake, hit-stop; vignette `vigT` (no white flash) |
-| Dodge / roll | `tryDodge`, `POSE.rollA/rollB`, roll rotation in `updatePose` |
-| Hit / death reactions | hurt flow (`'hit'`,`'hitH'`,`'down'`), `die`, `POSE.hitR/deathK` |
-| Particles, dust, afterimages | `dust`, `parts`, `ghostOf` |
+| Pose or state animation | `POSE`, `targetFor` (state → pose + speed), `updatePose` (blend, turn, roll) |
+| Attack keyframes / timing / damage | `KF` + `KFX`; `startAttack` |
+| Walk/run cycle, run speed cap | `RH`, `RK`, `locoPose`; `updatePlayer` (`max` line; Level 4 uses `CH.vmax`) |
+| Turning | `updatePose` (`fT`, `turnK`), width clamp in `drawFig` |
+| Figure drawing (limbs, head, headband, face) | `drawFig`, `legPts`, `armPts`, `drawFace` |
+| Feet, planting, footwork | `solveH`, `footX`, `footIK`, `f.prX`/`f.pfX` |
+| Dodge / roll | `tryDodge`, `POSE.rollA/rollB`, roll in `updatePose` |
+| Hit / death reactions | hurt states `'hit'`, `'hitH'`, `'down'`; `die`; `POSE.hitR/deathK` |
+| Weapon stats, hitbox, damage | `WSPEC`, `WDUR`, `WATK`, `mkWeapon`, `weaponHits`, `applyHit` |
+| Weapon swing arcs / phase timing / lead | `WS[weapon:swing].p`, `WB`, `WT`, `WRDY`, `WLEAD`, `wSeg`, `wAtkPose` |
+| Weapon pickup / heavy rejection | `findPickup`, `findHeavy`, `drops`, `clearOfProps` |
+| Weapon effects | `slashFx`, `wTrail`, `wShaft`/`wBeh`, `ring`, `dust`, `spark` |
 | Enemy behaviour | `crowd`, `AIP`, `maxAtk`, `decideAttack`; bosses `bossChoose3` |
-| A level's layout / waves | `buildLn`, `makeBGn`, `drawEnvn`, `wavesN`/`WAVESn` (L3: `WAVES3`, `waves3`) |
-| **Level 4 chase: start, gap, mistakes, knockdown** | `buildL4` (layout, obstacle list, car start), `chPre`/`chPost` (per-frame logic), `CH` (state: `mist`, `fg` gap, `fin`, `tip`) |
-| Level 4 car: speed, chase gap, crash, explosion | `chPost` car block (`c.mode`: idle/drive/swerve/crash/wreck), `gt` table for gap targets, `drawCar` |
-| Level 4 hazards (jump, timed, falling sign) | `chPost` obstacle loop, `chObs`, `chFall`; hazard sizes in `CHSZ` |
-| Level 4 camera | `chCam` (branch in `camUpdate`) |
-| Level 4 background / scenery | `chFar`, `chMid`, `chNear`, `chPole`, `drawChase` (zone colours in `sh`) |
-| Level 4 goons | `drawGoon`, `drawCar` (goons drawn inside the car window) |
-| Level 4 HUD and tips | `chaseHud`, `chTip`, `CHTUT` (tips show once per page load) |
-| Level 4 effects | `chBoom`, `drawFxP`, `CH.fx` (capped at 340) |
-| Level 4 wiring into the shared engine | `PLAYABLE`, `startLevel` (level 4 branch), `reset`, `simulate`, `camUpdate`, `render` (drawChase/drawChaseTop), HUD branch, `pLoco` (`CH.vmax`) |
+| Level layout / waves | `buildLn`, `makeBGn`, `drawEnvn`, `wavesN` (L3: `WAVES3`, `waves3`) |
+| Particles, dust, afterimages | `dust`, `parts`, `ghostOf` |
+| Screen shake / hit-stop / vignette | `trauma`, `hitStop`, `vigT` |
+| **Level 4 — gap, mistakes, knockdown** | `CHG` (gap targets), `CH` (state: `mist`, `fg`, `caught`, `fin`, `tip`), `chPost` (car block and hazard loop), `chObs`, `chBike` (motorbike), `chFall` (signs) |
+| Level 4 car: speed, modes, crash, explosion | `chPost` car block (`c.mode`: idle/drive/brake/swerve/crash/wreck), `drawCar` |
+| Level 4 hazard layout and sizes | `buildL4` (obstacle list), `CHSZ` (sizes, match visuals) |
+| Level 4 camera (whole car framed) | `chCam` (branch in `camUpdate`) |
+| Level 4 scenery | `chFar`, `chMid`, `chNear`, `chPole`, `drawChase` (zone colours in `sh`) |
+| Level 4 goons | `drawGoon`, `drawCar` |
+| Level 4 HUD and tips | `chaseHud`, `chTip`, `CHTUT` |
+| Level 4 effects | `chBoom`, `drawFxP`, `CH.fx` (cap 340) |
+| Level 4 wiring into shared engine | `PLAYABLE`, `startLevel`, `reset`, `simulate`, `camUpdate`, `render`, HUD branch |
 | Level unlocking | `DEV_UNLOCK_ALL`, `unlocked`, `PROG`, `levelConfirm`, `PLAYABLE` |
-| Level names | Chapter 1 list in the level-select data (Level 4 "The Chase", Level 5 "The Stranger") |
+| Level names | Chapter 1 level-select data (L4 "The Chase", L5 "The Stranger") |
 | Menus | `screen`, `enterMenu`, `menuFrame`, `renderMenu` |
-| Live-play / flash debugging | Headless harness used in tests (not in repo): run `window.__veera` with rAF frozen, sample canvas luminance |
-| Debug hook / test hooks | `window.__veera` (`step`, `render`, `cu`, `CH`, `WATK`, `startAttack`, `cam`, `add`, `get`, `startLevel`, `unlockAll`, `holdWaves`) |
+| Test hooks | `window.__veera`: `step`, `render`, `cu`, `CH`, `chObs`, `CHSZ`, `WATK`, `startAttack`, `cam`, `add`, `get`, `startLevel`, `unlockAll`, `holdWaves` |
