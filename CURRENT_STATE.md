@@ -1,39 +1,37 @@
 # CURRENT_STATE.md
 
-## Status
-- Chapter 1: Levels 1–4 playable. Level 5 "The Stranger" and Level 6 are locked placeholders.
-- `DEV_UNLOCK_ALL = true` for testing; set false for release.
-- Branch: `level4-dash-obstacles-open-road` (local, not pushed). Latest commit: `5f0976c`.
+## Chapter 1
+- Playable: Levels 1–4. Level 4 "The Chase" is the current pass, awaiting hand-play approval.
+- Locked placeholders: Level 5 "The Stranger", Level 6.
+- `DEV_UNLOCK_ALL = true` for testing. Set to `false` for release.
 
-## Level 4 — latest changes (awaiting hand-play)
-- Open Road shortened by 1000 px (`CHCUT`); finale items placed from `CHX`.
-- Dash-only falling barriers (`fall`): thin (44 px), 196 px tall, drawn size = collision size.
-  - Start falling only when Veera is about 140 px from impact, so the dash window opens right as it lands.
-  - Correct dash window about 130 px; jumping never clears them.
-  - Telegraph: hanging barrier, blinking footprint strip, dashed drop lines, edge arrow off-screen.
-- Start camera: never pans backward; no zoom dip; car enters from the left edge.
-- Market stalls: vegetables, fruits, fish and flowers each have their own goods and textures.
-  - Bananas hang from an awning hook.
-  - Construction zone: warning triangle replaced by a scaffold tower.
-- Shake: Level 4 uses smooth wobble instead of random jitter; barrier and car-hit shake reduced.
+## Repo
+- Current work: local branch `level4-dash-obstacles-open-road`, latest commit `f3f634a`. Based on `main` (`41440ff`).
+- All current Level 4 work is on the branch. It is not pushed or merged.
 
-## Verification (headless only)
-- Dash sweep: correct window 126–132 px in all zones; jump never clears; no errors.
-- Bot run: win with 0 mistakes. No-input run: ends after third mistake.
-- Levels 1–3 load and run 600 frames with no errors.
-- Start camera: 0 backward frames in a 30 s trace.
-- **Not hand-played.** Vibration report not confirmed on screen.
+## Level 4 — confirmed (headless only)
+- Bot run reaches the win with 0 mistakes.
+- No-input run ends after the third mistake.
+- Dash barrier: correct dash window is about 130 px in all four zones. Jump never clears it.
+- Start camera: never pans backward, no zoom dip; car enters from the left edge.
+- Levels 1–3 load and run without JS errors.
 
-## Open decisions
-- Explosion white glow (`CH.gl`) breaks the no-white-flash rule. Grey or keep as fireball highlight?
-- Level 4 pacing and gap feel (400/340/280 px) need hand-play.
-- Tip persistence across reloads (not possible in artifacts).
-- Goons small at chase zoom; pedestrians and fleeing crowds not implemented.
-- Blinking white lamp on Level 3 barricade is intentional; keep unless asked.
+## Level 4 — not hand-tested
+- Entire pass: pacing, gap feel (400/340/280 px), dash timing feel, camera and shake feel, market stall visuals, finale.
+- A "vibrating" report was not confirmed on screen. Shake was smoothed as a precaution.
 
-## Next
-1. Hand-play Level 4; report anything that feels off, with zone and position.
-2. Approve or reject the Level 4 pass.
-3. On approval: push branch, merge to `main`, update this file.
-4. Decide open items above.
-5. Then Level 5 "The Stranger".
+## Level 4 — open issues / decisions
+- Explosion white glow (`CH.gl`) breaks the no-white-flash rule. Keep as a fireball highlight, or switch to grey?
+- Goons are small at chase zoom.
+- Pedestrians and fleeing crowds are not implemented. Market and squeeze sections are light.
+- Tip persistence across reloads is not possible (no storage in artifacts).
+
+## Other open items
+- Levels 1–3 enemy weapon animations not visually reviewed.
+- Turning tightness after the twist cap needs user confirmation.
+- Blinking white lamp on the Level 3 barricade is intentional; keep unless asked.
+
+## Next step
+1. User hand-plays Level 4 and reports issues with zone and position.
+2. On approval: push the branch, merge to `main`, update this file.
+3. Then start Level 5 "The Stranger" (currently a locked placeholder).
